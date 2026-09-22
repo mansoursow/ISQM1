@@ -49,22 +49,57 @@ Ouvrir un livrable donne accès à trois onglets :
 
 ## Stockage
 
-Tout est écrit sur le disque du serveur, via
-[`src/server/stockage.ts`](src/server/stockage.ts) :
+Un seul module, [`src/server/stockage.ts`](src/server/stockage.ts), avec deux
+backends choisis automatiquement :
 
+| Condition | Backend | Où vont les données |
+| --- | --- | --- |
+| `BLOB_READ_WRITE_TOKEN` défini | Vercel Blob | store `isqm1-prive`, en accès **privé** |
+| sinon | disque | `data/etat.json` et `data/fichiers/` |
+
+`data/` n'est jamais versionné. Sur Blob, l'état vit dans `isqm1/etat.json` et
+les livrables dans `isqm1/livrables/<code>/<identifiant>.<ext>`.
+
+**Les fichiers déposés ne sont pas publics.** Le store est en accès privé :
+une requête directe sur l'URL du blob renvoie `403`. Les documents ne
+transitent que par le route handler de l'application, qui les relit côté
+serveur avec le jeton du store.
+
+Sur Blob, le navigateur **téléverse directement** vers le stockage, avec un
+jeton à portée restreinte délivré par `/api/livrables/[code]/televersement` :
+passer par le serveur plafonnerait le dépôt à quelques mégaoctets (limite de
+taille du corps des requêtes serverless). Le serveur relit ensuite la taille et
+le type réels du blob — les métadonnées annoncées par le client ne sont pas
+prises pour argent comptant.
+
+Les écritures concurrentes sont sérialisées par une file, et le fichier d'état
+est écrit de façon atomique sur disque. La file ne couvre qu'une instance :
+sur un hébergement qui en lance plusieurs, deux écritures simultanées restent
+possibles et la dernière l'emporte.
+
+## Déploiement
+
+| | |
+| --- | --- |
+| Production | https://isqm1.vercel.app |
+| Dépôt | https://github.com/mansoursow/ISQM1 |
+| Projet Vercel | `mansour-sows-projects/isqm1` |
+| Store Blob | `isqm1-prive` (région `iad1`, accès privé) |
+
+Le dépôt GitHub est connecté au projet : **un `git push` sur `main` déclenche
+un déploiement en production**. Un déploiement manuel se fait avec :
+
+```bash
+vercel --prod
 ```
-data/
-  etat.json          avancement, observations, index des documents
-  fichiers/<code>/   pièces jointes (nom de fichier généré, jamais celui de l'URL)
-```
 
-Les écritures concurrentes sont sérialisées par une file, et `etat.json` est
-écrit de façon atomique.
+Le store Blob est relié au projet, ce qui injecte `BLOB_READ_WRITE_TOKEN` dans
+les trois environnements. En local, sans ce jeton, l'application retombe
+automatiquement sur le disque — inutile de configurer quoi que ce soit pour
+développer.
 
-> **Hébergement.** Un hébergeur au système de fichiers éphémère (Vercel,
-> Netlify) perdrait ces données à chaque déploiement. Il faut un serveur avec
-> un disque persistant, ou remplacer `src/server/stockage.ts` par une base de
-> données — c'est le seul module à réécrire.
+> Ne pas faire `vercel env pull` pour travailler en local : cela ramènerait le
+> jeton de production et le poste écrirait dans le stockage partagé.
 
 ## Calendrier
 
@@ -91,7 +126,9 @@ l'échéance finale.
 | `src/lib/collab.ts` | Types et formatages partagés serveur / navigateur |
 | `src/lib/useCollab.ts` | État partagé côté client, mutations, rafraîchissement |
 | `src/lib/assainir.ts` | Filtrage du HTML issu d'un document Word |
-| `src/server/stockage.ts` | Persistance sur disque (seule porte d'entrée) |
+| `src/server/stockage.ts` | Persistance : façade et choix du backend |
+| `src/server/backend-disque.ts` | Backend disque local |
+| `src/server/backend-blob.ts` | Backend Vercel Blob (accès privé) |
 | `src/app/api/**` | Route handlers : état, statut, documents, observations |
 | `src/components/VueFeuilleDeRoute.tsx` | Assemblage de la page |
 | `src/components/Entete.tsx` | En-tête, avancement global et dates |
@@ -124,6 +161,5 @@ npm install
 npm run dev
 ```
 
-L'application est servie sur http://localhost:3000. Pour que l'équipe y accède,
-lancer `npm run build && npm start` sur un poste ou un serveur du réseau et
-partager son adresse.
+L'application est servie sur http://localhost:3000, avec le stockage sur
+disque. La version partagée par l'équipe est sur https://isqm1.vercel.app.
