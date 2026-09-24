@@ -3,8 +3,8 @@
 import { useState } from "react";
 import {
   ECHEANCE_FINALE,
-  LIVRABLES,
   PROJET,
+  TOTAL_LIVRABLES,
   formaterDate,
   joursRestants,
 } from "@/lib/isqm";
@@ -49,7 +49,7 @@ export function Entete({
   onReinitialiser,
 }: Props) {
   const [confirmation, setConfirmation] = useState(false);
-  const total = LIVRABLES.length;
+  const total = TOTAL_LIVRABLES;
   const pourcent = Math.round((nbTermines / total) * 100);
   const restants = aujourdhui ? joursRestants(ECHEANCE_FINALE, aujourdhui) : null;
 
@@ -59,7 +59,7 @@ export function Entete({
         Conformité <span className="text-orange-500">ISQM 1</span>
       </h1>
       <p className="mt-3 text-base text-navy-900/70 sm:text-lg">
-        24 livrables répartis dans les 8 composantes
+        {TOTAL_LIVRABLES} livrables répartis dans les 8 composantes
       </p>
 
       <div className="mx-auto mt-9 max-w-3xl rounded-2xl border border-line bg-white p-5 text-left shadow-[0_10px_30px_-22px_rgba(10,31,68,0.55)] sm:p-6">

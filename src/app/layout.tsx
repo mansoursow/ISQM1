@@ -10,7 +10,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ISQM 1 — Feuille de route de conformité",
   description:
-    "Suivi des 24 livrables ISQM 1 répartis en 8 composantes du système de gestion de la qualité.",
+    "Suivi des livrables ISQM 1 répartis en 8 composantes du système de gestion de la qualité.",
 };
 
 export default function RootLayout({

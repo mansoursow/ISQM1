@@ -1,11 +1,16 @@
 /**
  * Référentiel ISQM 1 (IAASB) — Système de gestion de la qualité (SGQ).
  *
- * 24 livrables (L1 → L24) répartis dans 8 composantes et produits au fil de
- * 6 phases de mise en œuvre. L'ordre `step` suit la démarche du document
- * « ISQM1 — Livrables et démarche de mise en œuvre » (note technique, sept. 2026),
- * et non la numérotation L1..L24 : c'est lui qui pilote le déverrouillage
- * séquentiel de l'arborescence.
+ Les livrables de la norme (L1 → L24) répartis dans 8 composantes et produits
+ * au fil de 6 phases de mise en œuvre. L'ordre `step` suit la démarche du
+ * document « ISQM1 — Livrables et démarche de mise en œuvre » (note technique,
+ * sept. 2026), et non la numérotation L1..L24 : c'est lui qui pilote le
+ * déverrouillage séquentiel de l'arborescence.
+ *
+ * L1, L2 et L3 sont regroupés en un document unique, comme la section 5 de la
+ * note technique l'autorise pour un cabinet modeste. Le nombre de livrables à
+ * produire n'est donc pas 24 : utiliser `TOTAL_LIVRABLES`, jamais une
+ * constante écrite en dur.
  */
 
 export const PROJET = {
@@ -29,16 +34,32 @@ export type Composante = {
   objet: string;
 };
 
-export type Livrable = {
-  /** Code officiel de la norme (L1 → L24). */
+/** Un des livrables de la norme regroupés dans un document unique. */
+export type LivrableSource = {
   code: string;
-  /** Rang dans la démarche : 1 → 24. Pilote le déverrouillage. */
+  titre: string;
+  contenu: string;
+};
+
+export type Livrable = {
+  /** Code officiel de la norme, ou codes joints quand il y a regroupement. */
+  code: string;
+  /** Rang dans la démarche. Pilote le déverrouillage. */
   step: number;
   titre: string;
   contenu: string;
   frequence: string;
   composante: number;
   phase: number;
+  /**
+   * Livrables de la norme couverts par ce document unique. Renseigné seulement
+   * en cas de regroupement (voir section 5 de la note technique).
+   */
+  composition?: LivrableSource[];
+  /** Autres composantes couvertes, quand le livrable en traverse plusieurs. */
+  composantesAussi?: number[];
+  /** Autres phases couvertes. */
+  phasesAussi?: number[];
   /** Livrable dépendant du profil du cabinet (section 5 du document). */
   siApplicable?: boolean;
   /** Décalage en jours ouvrés depuis le début du projet. */
@@ -140,17 +161,41 @@ export const PHASES: Phase[] = [
 ];
 
 export const LIVRABLES: Livrable[] = [
-  // ── Phase 1 — Gouvernance et cadrage (composante 2) ───────────────────────
+  // ── Phases 1 et 2 — Gouvernance, cadrage et conception du SGQ ────────────
   {
-    code: "L3",
+    // La section 5 de la note technique prévoit ce regroupement : « Objectifs,
+    // risques et réponses regroupés dans un document unique (L1, L2, L3) ».
+    code: "L1-L3",
     step: 1,
-    titre: "Matrice d'attribution des responsabilités",
+    titre: "Manuel du SGQ : objectifs, risques et responsabilités",
     contenu:
-      "Attribution écrite de la responsabilité ultime du SGQ à la direction générale (associé directeur) et des responsabilités fonctionnelles (indépendance, suivi, etc.).",
-    frequence: "À la mise en place, puis à chaque changement",
-    composante: 2,
+      "Document unique réunissant les objectifs de qualité du cabinet, la cartographie des risques liés à la qualité et les réponses associées, ainsi que l'attribution écrite des responsabilités du SGQ.",
+    composition: [
+      {
+        code: "L1",
+        titre: "Manuel / documentation du SGQ",
+        contenu:
+          "Objectifs de qualité du cabinet, risques liés à la qualité identifiés et réponses associées pour les atténuer.",
+      },
+      {
+        code: "L2",
+        titre: "Cartographie des risques liés à la qualité",
+        contenu:
+          "Identification et évaluation des risques présentant une possibilité raisonnable de se concrétiser et d'affecter l'atteinte des objectifs de qualité.",
+      },
+      {
+        code: "L3",
+        titre: "Matrice d'attribution des responsabilités",
+        contenu:
+          "Attribution écrite de la responsabilité ultime du SGQ à la direction générale (associé directeur) et des responsabilités fonctionnelles (indépendance, suivi, etc.).",
+      },
+    ],
+    frequence: "Continu, révisé à chaque changement",
+    composante: 1,
+    composantesAussi: [2],
     phase: 1,
-    jourOuvre: 1,
+    phasesAussi: [2],
+    jourOuvre: 3,
   },
   {
     code: "L4",
@@ -161,7 +206,7 @@ export const LIVRABLES: Livrable[] = [
     frequence: "À la mise en place, puis à chaque changement",
     composante: 2,
     phase: 1,
-    jourOuvre: 2,
+    jourOuvre: 4,
   },
   {
     code: "L5",
@@ -173,37 +218,13 @@ export const LIVRABLES: Livrable[] = [
     composante: 2,
     phase: 1,
     siApplicable: true,
-    jourOuvre: 3,
-  },
-
-  // ── Phase 2 — Évaluation des risques et conception du SGQ (composante 1) ──
-  {
-    code: "L1",
-    step: 4,
-    titre: "Manuel / documentation du SGQ",
-    contenu:
-      "Objectifs de qualité du cabinet, risques liés à la qualité identifiés et réponses associées pour les atténuer.",
-    frequence: "Continu",
-    composante: 1,
-    phase: 2,
-    jourOuvre: 4,
-  },
-  {
-    code: "L2",
-    step: 5,
-    titre: "Cartographie des risques liés à la qualité",
-    contenu:
-      "Identification et évaluation des risques présentant une possibilité raisonnable de se concrétiser et d'affecter l'atteinte des objectifs de qualité.",
-    frequence: "Continu",
-    composante: 1,
-    phase: 2,
     jourOuvre: 5,
   },
 
   // ── Phase 3a — Déontologie et indépendance (composante 3) ─────────────────
   {
     code: "L7",
-    step: 6,
+    step: 4,
     titre: "Procédures de déontologie et d'indépendance",
     contenu:
       "Politiques garantissant le respect des principes fondamentaux (intégrité, objectivité, compétence, confidentialité, comportement professionnel) et des règles d'indépendance, y compris par les tiers (réseau, fournisseurs).",
@@ -214,7 +235,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L8",
-    step: 7,
+    step: 5,
     titre: "Confirmations annuelles d'indépendance",
     contenu:
       "Confirmations écrites individuelles et consignées de conformité aux règles d'indépendance, obtenues auprès de tout le personnel concerné.",
@@ -225,7 +246,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L9",
-    step: 8,
+    step: 6,
     titre: "Dispositif de traitement des plaintes et allégations",
     contenu:
       "Dispositif de réception et de traitement des plaintes et des allégations.",
@@ -238,7 +259,7 @@ export const LIVRABLES: Livrable[] = [
   // ── Phase 3b — Acceptation et maintien (composante 4) ─────────────────────
   {
     code: "L10",
-    step: 9,
+    step: 7,
     titre: "Fiches d'évaluation préalable client / mission",
     contenu:
       "Évaluation de l'intégrité et des valeurs éthiques du client, de la capacité et des ressources du cabinet (compétences, temps, accès aux données), sans biais lié aux priorités financières ou commerciales.",
@@ -251,7 +272,7 @@ export const LIVRABLES: Livrable[] = [
   // ── Phase 3c — Réalisation des missions (composante 5) ────────────────────
   {
     code: "L11",
-    step: 10,
+    step: 8,
     titre: "Consignes de direction, de supervision et de revue",
     contenu:
       "Cadre de direction, supervision et revue des travaux selon l'expérience des membres de l'équipe ; consultation et résolution des divergences d'opinions.",
@@ -262,7 +283,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L12",
-    step: 11,
+    step: 9,
     titre: "Dossier de mission définitif assemblé",
     contenu:
       "Archivage complet et sécurisé de la documentation de la mission, à constituer au plus tard 60 jours après la date du rapport (missions ISA/ISAE).",
@@ -273,7 +294,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L13",
-    step: 12,
+    step: 10,
     titre:
       "Registre des missions soumises à revue de qualité et documentation de la revue (EQR / ISQM 2)",
     contenu:
@@ -288,7 +309,7 @@ export const LIVRABLES: Livrable[] = [
   // ── Phase 3d — Ressources (composante 6) ──────────────────────────────────
   {
     code: "L14",
-    step: 13,
+    step: 11,
     titre: "Plan de formation et de compétences (RH)",
     contenu:
       "Recrutement, formation continue, évaluation et affectation d'équipes qualifiées disposant du temps requis.",
@@ -299,7 +320,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L15",
-    step: 14,
+    step: 12,
     titre:
       "Revue de conformité des ressources technologiques et intellectuelles",
     contenu:
@@ -311,7 +332,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L16",
-    step: 15,
+    step: 13,
     titre: "Évaluation des fournisseurs de services",
     contenu:
       "Évaluation de la pertinence des ressources externes (experts, logiciels tiers).",
@@ -324,7 +345,7 @@ export const LIVRABLES: Livrable[] = [
   // ── Phase 4 — Information et communication (composante 7) ─────────────────
   {
     code: "L17",
-    step: 16,
+    step: 14,
     titre: "Plan de communication interne du SGQ",
     contenu:
       "Transmission au personnel et aux équipes de mission de leurs responsabilités et des évolutions du SGQ.",
@@ -335,7 +356,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L18",
-    step: 17,
+    step: 15,
     titre:
       "Rapport de communication avec les responsables de la gouvernance",
     contenu:
@@ -348,7 +369,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L19",
-    step: 18,
+    step: 16,
     titre:
       "Rapport de transparence / communications publiques ou aux régulateurs",
     contenu:
@@ -363,7 +384,7 @@ export const LIVRABLES: Livrable[] = [
   // ── Phase 5 — Suivi et mesures correctives (composante 8) ─────────────────
   {
     code: "L20",
-    step: 19,
+    step: 17,
     titre: "Programme et preuves des activités de suivi",
     contenu:
       "Programme et comptes rendus des activités de suivi continues et périodiques, incluant l'inspection cyclique d'au moins une mission achevée par associé responsable.",
@@ -374,7 +395,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L21",
-    step: 20,
+    step: 18,
     titre: "Rapport de constatations et d'analyse des causes profondes",
     contenu:
       "Registre des constatations issues des inspections (internes et externes) et rapports d'investigation sur les causes sous-jacentes (root causes) des déficiences.",
@@ -385,7 +406,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L22",
-    step: 21,
+    step: 19,
     titre: "Plan d'action et de suivi des mesures correctives",
     contenu:
       "Réponses conçues pour corriger les déficiences et évaluation de l'efficacité de ces mesures.",
@@ -396,7 +417,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L23",
-    step: 22,
+    step: 20,
     titre: "Rapports de communication interne sur le suivi",
     contenu:
       "Synthèses des activités de suivi transmises en temps opportun à la direction et aux équipes de mission.",
@@ -409,7 +430,7 @@ export const LIVRABLES: Livrable[] = [
   // ── Phase 6 — Évaluation annuelle par la direction ────────────────────────
   {
     code: "L24",
-    step: 23,
+    step: 21,
     titre: "Rapport d'évaluation et conclusion annuelle de la direction",
     contenu:
       "Évaluation formalisée du SGQ et conclusion sur l'assurance raisonnable que les objectifs de qualité sont atteints (sans réserve, avec réserve ou défavorable).",
@@ -420,7 +441,7 @@ export const LIVRABLES: Livrable[] = [
   },
   {
     code: "L6",
-    step: 24,
+    step: 22,
     titre: "Évaluations périodiques de performance",
     contenu:
       "Procès-verbaux ou fiches d'évaluation de la performance des personnes responsables du SGQ et de son fonctionnement.",
@@ -432,7 +453,10 @@ export const LIVRABLES: Livrable[] = [
 ];
 
 /** Ordre d'apparition des composantes dans l'arborescence (ordre de la démarche). */
-export const ORDRE_COMPOSANTES = [2, 1, 3, 4, 5, 6, 7, 8] as const;
+export const ORDRE_COMPOSANTES = [1, 2, 3, 4, 5, 6, 7, 8] as const;
+
+/** Nombre de documents à produire, regroupements pris en compte. */
+export const TOTAL_LIVRABLES = LIVRABLES.length;
 
 // ── Dates ──────────────────────────────────────────────────────────────────
 

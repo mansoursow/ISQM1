@@ -3,8 +3,8 @@
 import type { DocumentLivrable, Observation } from "@/lib/collab";
 import {
   COMPOSANTES,
-  LIVRABLES,
   ORDRE_COMPOSANTES,
+  TOTAL_LIVRABLES,
   echeance,
   formaterDateCourt,
   joursRestants,
@@ -37,7 +37,7 @@ export function Arborescence({
   aujourdhui,
   onOuvrir,
 }: Props) {
-  const tousTermines = termines.size === LIVRABLES.length;
+  const tousTermines = termines.size === TOTAL_LIVRABLES;
 
   return (
     <section className="mx-auto max-w-5xl px-4 pb-24 sm:px-6">
@@ -116,7 +116,8 @@ function RacineSGQ({
           Système de gestion de la qualité
         </h2>
         <p className="mt-1.5 text-[13px] text-white/70">
-          8 composantes · 24 livrables · 6 phases de mise en œuvre
+          8 composantes · {TOTAL_LIVRABLES} livrables · 6 phases de mise en
+          œuvre
         </p>
       </div>
       <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-[13px] font-semibold">
@@ -255,10 +256,21 @@ function CarteLivrable({
             verrouille ? "text-muted" : "text-navy-500"
           }`}
         >
-          Étape {livrable.step}/24
+          Étape {livrable.step}/{TOTAL_LIVRABLES}
         </span>
         <span className="text-xs text-muted">·</span>
         <span className="text-xs text-muted">{livrable.frequence}</span>
+        {livrable.composition ? (
+          <span
+            className={`rounded-lg px-2 py-0.5 text-[11px] font-semibold ${
+              verrouille
+                ? "bg-line-soft text-muted"
+                : "bg-navy-100 text-navy-700"
+            }`}
+          >
+            {livrable.composition.length} livrables réunis
+          </span>
+        ) : null}
         {livrable.siApplicable ? (
           <span className="rounded-lg border border-line px-2 py-0.5 text-[11px] font-medium text-muted">
             si applicable

@@ -12,6 +12,7 @@ import {
 import {
   COMPOSANTES,
   PHASES,
+  TOTAL_LIVRABLES,
   echeance,
   formaterDate,
   joursRestants,
@@ -107,7 +108,7 @@ export function PanneauLivrable({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.16em] text-orange-200 uppercase">
-                Livrable {livrable.code} · Étape {livrable.step}/24
+                Livrable {livrable.code} · Étape {livrable.step}/{TOTAL_LIVRABLES}
               </p>
               <h2 id="titre-livrable" className="mt-1 text-lg font-bold">
                 {livrable.titre}
@@ -553,14 +554,60 @@ function SectionFiche({
   const phase = PHASES.find((p) => p.id === livrable.phase)!;
   const enRetard = etat !== "termine" && restants !== null && restants < 0;
 
+  const composantesAussi = (livrable.composantesAussi ?? []).map(
+    (id) => COMPOSANTES.find((c) => c.id === id)!,
+  );
+  const phasesAussi = (livrable.phasesAussi ?? []).map(
+    (id) => PHASES.find((p) => p.id === id)!,
+  );
+
   return (
     <div>
       <div className="flex flex-wrap gap-2">
         <Puce label={`Composante ${composante.id}`} accent />
+        {composantesAussi.map((c) => (
+          <Puce key={c.id} label={`Composante ${c.id}`} accent />
+        ))}
         <Puce label={`Phase ${phase.id}`} />
+        {phasesAussi.map((p) => (
+          <Puce key={p.id} label={`Phase ${p.id}`} />
+        ))}
         <Puce label={livrable.frequence} />
         {livrable.siApplicable ? <Puce label="Si applicable" /> : null}
       </div>
+
+      {livrable.composition ? (
+        <div className="mt-6 rounded-2xl border border-navy-100 bg-navy-100/40 p-4">
+          <h3 className="text-[11px] font-bold tracking-[0.14em] text-navy-700 uppercase">
+            Un seul document pour {livrable.composition.length} livrables
+          </h3>
+          <p className="mt-1.5 text-xs leading-relaxed text-navy-900/75">
+            Ces livrables de la norme sont réunis dans un document unique : il
+            n&apos;y a donc qu&apos;un fichier à joindre, mais il doit couvrir
+            les {livrable.composition.length} contenus ci-dessous.
+          </p>
+          <ul className="mt-3 space-y-2.5">
+            {livrable.composition.map((source) => (
+              <li
+                key={source.code}
+                className="rounded-xl bg-white px-3.5 py-3"
+              >
+                <p className="flex flex-wrap items-baseline gap-2">
+                  <span className="rounded-md bg-navy-700 px-2 py-0.5 text-[11px] font-bold text-white">
+                    {source.code}
+                  </span>
+                  <span className="text-sm font-semibold text-navy-900">
+                    {source.titre}
+                  </span>
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-navy-900/75">
+                  {source.contenu}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <Bloc titre="Contenu attendu">
         <p className="text-sm leading-relaxed text-navy-900/80">
@@ -590,18 +637,20 @@ function SectionFiche({
         ) : null}
       </Bloc>
 
-      <Bloc titre={`Composante ${composante.id} — ${composante.titre}`}>
-        <p className="text-sm leading-relaxed text-navy-900/80">
-          {composante.objet}
-        </p>
-      </Bloc>
+      {[composante, ...composantesAussi].map((c) => (
+        <Bloc key={c.id} titre={`Composante ${c.id} — ${c.titre}`}>
+          <p className="text-sm leading-relaxed text-navy-900/80">{c.objet}</p>
+        </Bloc>
+      ))}
 
-      <Bloc titre={`Phase ${phase.id} — ${phase.titre}`}>
-        <p className="text-sm leading-relaxed text-navy-900/80">
-          {phase.objectif}
-        </p>
-        <p className="mt-1 text-xs text-muted">Couvre : {phase.composantes}</p>
-      </Bloc>
+      {[phase, ...phasesAussi].map((p) => (
+        <Bloc key={p.id} titre={`Phase ${p.id} — ${p.titre}`}>
+          <p className="text-sm leading-relaxed text-navy-900/80">
+            {p.objectif}
+          </p>
+          <p className="mt-1 text-xs text-muted">Couvre : {p.composantes}</p>
+        </Bloc>
+      ))}
 
       {livrable.siApplicable ? (
         <div className="mt-6 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">

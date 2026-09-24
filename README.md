@@ -1,17 +1,17 @@
 # ISQM 1 — Feuille de route de conformité
 
 Espace de travail partagé pour la mise en conformité à la norme **ISQM 1**
-(IAASB) : les **24 livrables** du système de gestion de la qualité (SGQ),
-répartis dans les **8 composantes** de la norme et présentés sous forme
-d'organigramme. Chaque livrable est un dossier où l'on dépose le document
-produit et où l'équipe laisse ses observations.
+(IAASB) : les livrables du système de gestion de la qualité (SGQ), répartis
+dans les **8 composantes** de la norme et présentés sous forme d'organigramme.
+Chaque livrable est un dossier où l'on dépose le document produit et où
+l'équipe laisse ses observations.
 
 ## Principe
 
 - **En-tête** : titre, avancement global et dates clés (lancement, échéance
   finale, temps restant).
 - **Arborescence** : racine « Système de gestion de la qualité » → 8 composantes
-  → livrables (L1 → L24).
+  → livrables.
 - **Déverrouillage séquentiel.** Un seul livrable est ouvert à la fois : il
   clignote en orange. Les suivants restent grisés et non cliquables tant qu'il
   n'est pas validé.
@@ -21,6 +21,24 @@ produit et où l'équipe laisse ses observations.
   annuelle.
 - Chaque livrable porte une **échéance** calculée en jours ouvrés depuis le
   lancement du projet.
+
+### Regroupement de livrables
+
+La norme définit 24 livrables (L1 → L24), mais **L1, L2 et L3 sont réunis en un
+document unique** — ce que la section 5 de la note technique autorise pour un
+cabinet modeste : « Objectifs, risques et réponses regroupés dans un document
+unique (L1, L2, L3) ». Il n'y a donc **qu'un seul fichier à joindre** pour les
+trois, et **22 documents** à produire au total.
+
+Ce livrable groupé porte le code `L1-L3`, ouvre la démarche, et traverse les
+composantes 1 et 2 ainsi que les phases 1 et 2. Sa fiche détaille les trois
+contenus que le document doit couvrir, pour qu'aucune exigence de la norme ne
+se perde dans le regroupement.
+
+Pour regrouper d'autres livrables, renseigner le champ `composition` dans
+[`src/lib/isqm.ts`](src/lib/isqm.ts) et renuméroter les `step`. Le total
+affiché partout vient de `TOTAL_LIVRABLES` : aucun nombre n'est écrit en dur
+dans l'interface.
 
 ## Travail à plusieurs
 
@@ -114,14 +132,14 @@ export const PROJET = {
 ```
 
 Chaque livrable déclare un `jourOuvre` (décalage en jours ouvrés depuis
-`debut`). Modifier `debut` décale automatiquement les 24 échéances et
+`debut`). Modifier `debut` décale automatiquement toutes les échéances et
 l'échéance finale.
 
 ## Structure
 
 | Fichier | Rôle |
 | --- | --- |
-| `src/lib/isqm.ts` | Référentiel : composantes, phases, 24 livrables, calcul des échéances |
+| `src/lib/isqm.ts` | Référentiel : composantes, phases, livrables, regroupements, échéances |
 | `src/lib/membres.ts` | Annuaire des intervenants |
 | `src/lib/collab.ts` | Types et formatages partagés serveur / navigateur |
 | `src/lib/useCollab.ts` | État partagé côté client, mutations, rafraîchissement |
