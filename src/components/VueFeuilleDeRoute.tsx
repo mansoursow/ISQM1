@@ -36,6 +36,18 @@ export function VueFeuilleDeRoute({
 
   const { actif, etat, definirStatut } = collab;
 
+  // Un fichier lâché à côté de la zone de dépôt ferait quitter la page pour
+  // l'afficher : le navigateur ne doit rien faire de ces dépôts manqués.
+  useEffect(() => {
+    const ignorer = (e: DragEvent) => e.preventDefault();
+    window.addEventListener("dragover", ignorer);
+    window.addEventListener("drop", ignorer);
+    return () => {
+      window.removeEventListener("dragover", ignorer);
+      window.removeEventListener("drop", ignorer);
+    };
+  }, []);
+
   // Après une validation, on amène l'utilisateur sur l'étape qui vient de s'ouvrir.
   useEffect(() => {
     if (!aInteragi.current || !actif) return;

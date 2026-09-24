@@ -279,27 +279,44 @@ function SectionDocuments({
   onLire: (doc: DocumentLivrable) => void;
 }) {
   const champ = useRef<HTMLInputElement>(null);
-  // Le fichier attend le nom de la personne qui le dépose avant d'être envoyé.
+  /** Fichier en attente du nom du déposant : seulement quand on ne le sait pas. */
   const [enAttente, setEnAttente] = useState<File | null>(null);
-  const [envoi, setEnvoi] = useState(false);
+  /** Nom du fichier en cours d'envoi, pour que l'attente soit visible. */
+  const [envoi, setEnvoi] = useState<string | null>(null);
+  const [echec, setEchec] = useState<string | null>(null);
+  const [changerAuteur, setChangerAuteur] = useState(false);
   const [survol, setSurvol] = useState(false);
 
   const viderChamp = () => {
     if (champ.current) champ.current.value = "";
   };
 
-  const envoyer = async (auteur: string) => {
-    const fichier = enAttente;
+  const envoyer = async (fichier: File, auteur: string) => {
     setEnAttente(null);
-    if (!fichier) return;
-    setEnvoi(true);
+    setChangerAuteur(false);
+    setEchec(null);
+    setEnvoi(fichier.name);
     try {
       await onDeposer(code, fichier, auteur);
-    } catch {
-      // Le message d'erreur est affiché en tête de page.
+    } catch (e) {
+      setEchec(e instanceof Error ? e.message : "Le dépôt du fichier a échoué.");
     } finally {
-      setEnvoi(false);
+      setEnvoi(null);
       viderChamp();
+    }
+  };
+
+  /**
+   * Un fichier choisi part immédiatement : le nom n'est demandé que si on ne
+   * le connaît pas encore, ou si la personne a demandé à en changer.
+   */
+  const choisir = (fichier: File | null | undefined) => {
+    if (!fichier) return;
+    setEchec(null);
+    if (dernierAuteur && !changerAuteur) {
+      void envoyer(fichier, dernierAuteur);
+    } else {
+      setEnAttente(fichier);
     }
   };
 
@@ -314,52 +331,81 @@ function SectionDocuments({
         onDrop={(e) => {
           e.preventDefault();
           setSurvol(false);
-          const fichier = e.dataTransfer.files?.[0];
-          if (fichier) setEnAttente(fichier);
+          choisir(e.dataTransfer.files?.[0]);
         }}
         className={`rounded-2xl border-2 border-dashed px-4 py-6 text-center transition-colors ${
-          survol ? "border-orange-500 bg-orange-50" : "border-line bg-sand-50"
+          survol || enAttente
+            ? "border-orange-500 bg-orange-50"
+            : "border-line bg-sand-50"
         }`}
       >
         <IconeImport className="mx-auto size-6 text-navy-500" />
         <p className="mt-2 text-sm font-semibold text-navy-900">
-          Déposer le livrable
+          {envoi ? "Envoi en cours…" : "Déposer le livrable"}
         </p>
         <p className="mt-0.5 text-[11px] text-muted">
-          {enAttente
-            ? `Prêt : ${enAttente.name}`
-            : "PDF ou Word (.docx, .doc) — 25 Mo maximum"}
+          {envoi ?? "PDF ou Word (.docx, .doc) — 25 Mo maximum"}
         </p>
         <input
           ref={champ}
           type="file"
           accept={FORMATS_ACCEPTES}
           className="hidden"
-          onChange={(e) => setEnAttente(e.target.files?.[0] ?? null)}
+          onChange={(e) => choisir(e.target.files?.[0])}
         />
 
         <button
           type="button"
           onClick={() => champ.current?.click()}
-          disabled={envoi}
+          disabled={envoi !== null}
           className="mt-3 cursor-pointer rounded-xl bg-navy-700 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-navy-800 disabled:cursor-not-allowed disabled:bg-muted"
         >
-          {envoi ? "Envoi en cours…" : "Choisir un fichier"}
+          {envoi ? "Envoi…" : "Choisir un fichier"}
         </button>
+
+        {dernierAuteur && !enAttente && !envoi ? (
+          <p className="mt-2.5 text-[11px] text-muted">
+            Vous déposez en tant que{" "}
+            <span className="font-semibold text-navy-900">{dernierAuteur}</span>
+            {" · "}
+            <button
+              type="button"
+              onClick={() => {
+                setChangerAuteur(true);
+                champ.current?.click();
+              }}
+              className="cursor-pointer font-semibold text-orange-600 underline underline-offset-2"
+            >
+              changer
+            </button>
+          </p>
+        ) : null}
       </div>
 
       {enAttente ? (
         <div className="mt-3">
+          <p className="mb-2 text-center text-xs font-semibold text-navy-900">
+            « {enAttente.name} » est prêt — il ne partira qu&apos;une fois le
+            nom choisi.
+          </p>
           <ChoixAuteur
             titre="Qui dépose ce document ?"
             defaut={dernierAuteur}
-            onChoisir={(nom) => void envoyer(nom)}
+            onChoisir={(nom) => void envoyer(enAttente, nom)}
             onAnnuler={() => {
               setEnAttente(null);
+              setChangerAuteur(false);
               viderChamp();
             }}
           />
         </div>
+      ) : null}
+
+      {echec ? (
+        <p className="mt-3 flex items-start gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2.5 text-[11px] leading-relaxed text-orange-600">
+          <IconeAlerte className="mt-px size-3.5 shrink-0" />
+          {echec}
+        </p>
       ) : null}
 
       {documents.length === 0 ? (

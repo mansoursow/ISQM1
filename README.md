@@ -46,7 +46,7 @@ Ouvrir un livrable donne accès à trois onglets :
 
 | Onglet | Contenu |
 | --- | --- |
-| **Documents** | Dépôt du livrable en PDF ou Word, lecture dans le site, téléchargement, retrait |
+| **Documents** | Dépôt du livrable en PDF ou Word, lecture dans le site, téléchargement, retrait. Le fichier choisi part immédiatement, signé du dernier nom utilisé sur le poste ; le nom n'est demandé qu'au tout premier dépôt ou via « changer ». |
 | **Observations** | Fil de discussion : chacun commente le livrable depuis son poste |
 | **Fiche** | Contenu attendu par la norme, fréquence, composante, phase, échéance |
 
@@ -91,6 +91,14 @@ serveur d'envoi. Les cinq destinataires par défaut sont codés dans
 [`src/server/courriel.ts`](src/server/courriel.ts) ; définir
 `COURRIEL_DESTINATAIRES` permet de restreindre la liste, par exemple le temps
 d'un essai.
+
+### En local, aucun courriel ne part
+
+`SMTP_MOTDEPASSE` n'existe que sur Vercel. Un dépôt fait sur
+`http://localhost:3000` enregistre donc le document mais n'envoie rien, et le
+journal du serveur affiche `[courriel] SMTP non configuré`. Pour essayer
+l'envoi depuis un poste, ajouter le mot de passe dans un fichier `.env.local`
+(jamais versionné) — au prix d'écrire depuis ce poste dans la boîte réelle.
 
 ### Mot de passe
 
