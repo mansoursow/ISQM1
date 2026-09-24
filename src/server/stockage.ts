@@ -113,17 +113,21 @@ export function cheminTeleversement(code: string, typeMime: string): string {
   return `isqm1/livrables/${code}/${nomDeFichier(typeMime)}`;
 }
 
-function ajouterDocument(
+/** Résultat d'un dépôt : le nouvel état, et le document qui vient d'entrer. */
+export type Depot = { etat: EtatPartage; document: DocumentLivrable };
+
+async function ajouterDocument(
   code: string,
   document: DocumentLivrable,
-): Promise<EtatPartage> {
-  return modifierEtat((etat) => ({
-    ...etat,
+): Promise<Depot> {
+  const etat = await modifierEtat((e) => ({
+    ...e,
     documents: {
-      ...etat.documents,
-      [code]: [...(etat.documents[code] ?? []), document],
+      ...e.documents,
+      [code]: [...(e.documents[code] ?? []), document],
     },
   }));
+  return { etat, document };
 }
 
 /** Dépôt passant par le serveur (backend disque). */
@@ -131,7 +135,7 @@ export async function enregistrerDocument(
   code: string,
   donnees: Buffer,
   meta: { nom: string; typeMime: string; auteur: string },
-): Promise<EtatPartage> {
+): Promise<Depot> {
   const fichier = await backend.deposer(
     code,
     nomDeFichier(meta.typeMime),
@@ -158,7 +162,7 @@ export async function enregistrerDocument(
 export async function enregistrerDocumentTeleverse(
   code: string,
   meta: { nom: string; auteur: string; localisateur: string },
-): Promise<EtatPartage | null> {
+): Promise<Depot | null> {
   if (!meta.localisateur.startsWith(`isqm1/livrables/${code}/`)) return null;
 
   const reel = await verifierBlob(meta.localisateur);

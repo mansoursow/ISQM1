@@ -65,6 +65,48 @@ Ouvrir un livrable donne accès à trois onglets :
   pas du temps réel : une observation d'un collègue apparaît en une dizaine de
   secondes.
 
+## Notification par courriel
+
+Dès qu'un document est déposé, un courriel part vers l'équipe : qui a déposé,
+sur quel livrable, quel fichier, quelle échéance, et un lien vers la carte
+concernée.
+
+L'envoi **ne peut jamais faire échouer un dépôt** : toute erreur SMTP est
+consignée dans les journaux et avalée, le document reste enregistré. Si le
+SMTP n'est pas configuré, la notification est simplement inactive.
+
+### Réglages
+
+| Variable | Rôle | Valeur posée |
+| --- | --- | --- |
+| `SMTP_HOTE` | serveur d'envoi | `smtp.hostinger.com` |
+| `SMTP_PORT` | port (465 = TLS direct, 587 = STARTTLS) | `465` |
+| `SMTP_UTILISATEUR` | boîte qui envoie | `mansour.sow@adoc-consulting.com` |
+| `SMTP_MOTDEPASSE` | mot de passe de cette boîte | **à renseigner** |
+| `COURRIEL_EXPEDITEUR` | adresse affichée en expéditeur | idem utilisateur |
+| `COURRIEL_DESTINATAIRES` | liste séparée par des virgules | *(absent → les 5 destinataires par défaut)* |
+
+`adoc-consulting.com` est hébergé chez Hostinger (`mx1.hostinger.com`), d'où le
+serveur d'envoi. Les cinq destinataires par défaut sont codés dans
+[`src/server/courriel.ts`](src/server/courriel.ts) ; définir
+`COURRIEL_DESTINATAIRES` permet de restreindre la liste, par exemple le temps
+d'un essai.
+
+### Mot de passe
+
+Il n'est pas dans le dépôt et ne doit transiter par personne d'autre que vous :
+
+```bash
+vercel env add SMTP_MOTDEPASSE production
+```
+
+La commande demande la valeur en saisie masquée. À répéter pour `preview` et
+`development` si besoin, puis redéployer avec `vercel --prod`.
+
+> Les courriels partiront de `mansour.sow@adoc-consulting.com`. Pour qu'ils
+> n'aient pas l'air de venir d'une personne, créer une boîte dédiée
+> (`isqm1@adoc-consulting.com`) et pointer `SMTP_UTILISATEUR` dessus.
+
 ## Stockage
 
 Un seul module, [`src/server/stockage.ts`](src/server/stockage.ts), avec deux
@@ -144,6 +186,7 @@ l'échéance finale.
 | `src/lib/collab.ts` | Types et formatages partagés serveur / navigateur |
 | `src/lib/useCollab.ts` | État partagé côté client, mutations, rafraîchissement |
 | `src/lib/assainir.ts` | Filtrage du HTML issu d'un document Word |
+| `src/server/courriel.ts` | Notification de dépôt : composition et envoi SMTP |
 | `src/server/stockage.ts` | Persistance : façade et choix du backend |
 | `src/server/backend-disque.ts` | Backend disque local |
 | `src/server/backend-blob.ts` | Backend Vercel Blob (accès privé) |
@@ -166,6 +209,8 @@ l'échéance finale.
   demandée.
 - Rien n'empêche quelqu'un de publier sous le nom d'un collègue : le sélecteur
   de nom est une signature déclarative.
+- Seul le dépôt d'un document déclenche un courriel. Les observations et les
+  validations d'étapes n'en envoient pas.
 
 ## Charte graphique
 

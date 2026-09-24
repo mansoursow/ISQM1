@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { erreur, nettoyerAuteur, refuserCodeInvalide } from "@/server/api";
+import { notifierDepot } from "@/server/courriel";
 import {
   STOCKAGE_DISTANT,
   TAILLE_MAX_OCTETS,
@@ -65,15 +66,15 @@ async function enregistrerTeleversement(code: string, requete: NextRequest) {
     return erreur("Métadonnées de dépôt incomplètes.", 400);
   }
 
-  const etat = await enregistrerDocumentTeleverse(code, {
+  const depot = await enregistrerDocumentTeleverse(code, {
     nom: nomPropre(corps.nom),
     auteur,
     localisateur: corps.chemin,
   });
+  if (!depot) return erreur("Le fichier téléversé a été refusé.", 400);
 
-  return etat
-    ? Response.json(etat, { status: 201 })
-    : erreur("Le fichier téléversé a été refusé.", 400);
+  await notifierDepot(code, depot.document);
+  return Response.json(depot.etat, { status: 201 });
 }
 
 async function recevoirFichier(code: string, requete: NextRequest) {
@@ -99,12 +100,14 @@ async function recevoirFichier(code: string, requete: NextRequest) {
     return erreur("Format refusé : déposez un PDF ou un document Word.", 415);
   }
 
-  return Response.json(
-    await enregistrerDocument(code, Buffer.from(await fichier.arrayBuffer()), {
-      nom: nomPropre(fichier.name),
-      typeMime,
-      auteur,
-    }),
-    { status: 201 },
+  const depot = await enregistrerDocument(
+    code,
+    Buffer.from(await fichier.arrayBuffer()),
+    { nom: nomPropre(fichier.name), typeMime, auteur },
   );
+
+  // L'envoi est attendu pour ne pas être interrompu par la fin de la fonction,
+  // mais il n'échoue jamais : le dépôt reste enregistré quoi qu'il arrive.
+  await notifierDepot(code, depot.document);
+  return Response.json(depot.etat, { status: 201 });
 }
